@@ -1,0 +1,104 @@
+From 25432a3f0b27e860810f43fad7ed57174761dcd1 Mon Sep 17 00:00:00 2001
+From: Amanuttam1192 <201b035@juetguna.in>
+Date: Tue, 26 Jul 2022 15:02:06 +0530
+Subject: [PATCH] create patch file
+
+---
+ src/DataManipulator.ts | 29 +++++++++++++++++++++--------
+ src/Graph.tsx          | 24 +++++++++++++++---------
+ 2 files changed, 36 insertions(+), 17 deletions(-)
+
+diff --git a/src/DataManipulator.ts b/src/DataManipulator.ts
+index f6b15ff..cf95b05 100644
+--- a/src/DataManipulator.ts
++++ b/src/DataManipulator.ts
+@@ -1,20 +1,33 @@
+ import { ServerRespond } from './DataStreamer';
+ 
+ export interface Row {
+-  stock: string,
+-  top_ask_price: number,
+-  timestamp: Date,
++  price_abc: number,
++      price_def: number,
++      ratio: number,
++      timestamp: date,
++      upper_bound: number,
++      lower_bound: number,
++      trigger_alert: number | undefined,
++
+ }
+ 
+ 
+ export class DataManipulator {
+   static generateRow(serverResponds: ServerRespond[]): Row[] {
+-    return serverResponds.map((el: any) => {
++    const priceABC=(serverRespond[0].top_ask.price+serverRespond[0].top_bid.price)/2;
++    const priceDEF=(serverRespond[1].top_ask.price+serverRespond[1].top_bid.price)/2;
++    const ratio=priceABC/priceDEF;
++    const upper_bound=1+0.05;
++    const lower_bound=1=0.05;
+       return {
+-        stock: el.stock,
+-        top_ask_price: el.top_ask && el.top_ask.price || 0,
+-        timestamp: el.timestamp,
++        price_abc: priceABC;
++        price_def: priceDEF;
++        timestamp: serverRespond[0].timestamp>serverRespond[1].timestamp ?
++        ServerRespond[0].timestamp : serverRespond[1].timestamp,
++        upper_bound: upperBound;
++        lower_bound: lowerBound;
++        trigger_alert:(ratio>upperBound || ratio<lowerBound)?ratio:undefined,
+       };
+     })
+   }
+-}
++
+diff --git a/src/Graph.tsx b/src/Graph.tsx
+index 58fb997..bcb2db7 100644
+--- a/src/Graph.tsx
++++ b/src/Graph.tsx
+@@ -23,10 +23,14 @@ class Graph extends Component<IProps, {}> {
+     const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+ 
+     const schema = {
+-      stock: 'string',
+-      top_ask_price: 'float',
+-      top_bid_price: 'float',
++      price_abc: 'float',
++      price_def: 'float',
++      ratio: 'float',
+       timestamp: 'date',
++      upper_bound: 'float',
++      lower_bound: 'float',
++      trigger_alert: 'float',
++      
+     };
+ 
+     if (window.perspective && window.perspective.worker()) {
+@@ -36,14 +40,16 @@ class Graph extends Component<IProps, {}> {
+       // Load the `table` in the `<perspective-viewer>` DOM reference.
+       elem.load(this.table);
+       elem.setAttribute('view', 'y_line');
+-      elem.setAttribute('column-pivots', '["stock"]');
+       elem.setAttribute('row-pivots', '["timestamp"]');
+-      elem.setAttribute('columns', '["top_ask_price"]');
++      elem.setAttribute('columns', '["ratio","lower_bound","upper_bound","trigger_alert"]');      
+       elem.setAttribute('aggregates', JSON.stringify({
+-        stock: 'distinctcount',
+-        top_ask_price: 'avg',
+-        top_bid_price: 'avg',
+-        timestamp: 'distinct count',
++       price_abc: 'avg',
++      price_def: 'avg',
++      ratio: 'avg',
++      timestamp: 'distinct count',
++      upper_bound: 'avg',
++      lower_bound: 'avg',
++      trigger_alert: 'avg',
+       }));
+     }
+   }
+-- 
+2.36.1.windows.1
+
